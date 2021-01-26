@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import { writeFileSync } from "fs";
+import { writeFileSync, existsSync, mkdirSync } from "fs";
 import path from "path"
 import pg from "pg"
 export const backupPostgresFunctions = async (
@@ -21,6 +21,7 @@ export const backupPostgresFunctions = async (
     await client.connect()
     const { rows } = await client.query<{ function_text: string }>(query)
     const text = rows.map(row => row.function_text).join("\r\n\r\n")
+    createDirectoryIfNotExists(path.join(process.cwd(), "output"))
     writeFileSync(path.join(process.cwd(), "output", `functions-${filename}.sql`), text)
   } catch (e) {
     console.log("Error: ", e)
@@ -41,6 +42,7 @@ export const backupPostgresTables = async (
     await client.connect()
     const { rows } = await client.query<{ table_name: string }>(query)
     const tables = rows.map(row => row.table_name)
+    createDirectoryIfNotExists(path.join(process.cwd(), "output"))
     const destinationFilePath = path.join(process.cwd(), "output", `tables-${filename}.sql`)
     const args = [
       connectionString,
@@ -60,10 +62,16 @@ export const executeCommand = (
 ): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     const spawnedCmd = exec(`${command} ${args.join(" ")}`);
-        spawnedCmd.on("exit", () => {
-          resolve()
+    spawnedCmd.on("exit", () => {
+      resolve()
     });
   });
 };
+
+export const createDirectoryIfNotExists = (dir: string) => {
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+}
 
 

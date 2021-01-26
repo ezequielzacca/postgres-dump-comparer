@@ -26,6 +26,7 @@ const executeProgram = async () => {
   }])
   const promisesToResolve: Promise<any>[] = []
   const spinner = ora('Dumping selected objects...').start()
+  
   const dumpProdFunctions = backupPostgresFunctions(
     process.env.CONNECTION_STRING_PROD as string,
     "prod"
@@ -52,5 +53,6 @@ const executeProgram = async () => {
   }
   await Promise.all(promisesToResolve)
   spinner.stop()
+  console.log("Finished Successfully!")
 }
-executeProgram().then(() => console.log("finished")).catch(console.log);
+executeProgram()
