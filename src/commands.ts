@@ -1,9 +1,7 @@
-import { exec, spawn } from "child_process";
+import { exec } from "child_process";
 import { writeFileSync } from "fs";
 import path from "path"
 import pg from "pg"
-import { Promesify } from "js-promesify"
-import { parse } from "pg-connection-string"
 export const backupPostgresFunctions = async (
   connectionString: string,
   filename: string
@@ -27,12 +25,7 @@ export const backupPostgresFunctions = async (
   } catch (e) {
     console.log("Error: ", e)
   }
-
 };
-
-const wait = (time: number) => new Promise((resolve) => {
-  setTimeout(resolve, time * 1000)
-})
 
 export const backupPostgresTables = async (
   connectionString: string,
@@ -40,34 +33,25 @@ export const backupPostgresTables = async (
 ) => {
   try {
     const query = `
-    SELECT table_name FROM information_schema.tables WHERE table_schema='public';
+    SELECT table_name FROM information_schema.tables WHERE table_schema='public' order by table_name;
     `
     const client = new pg.Client({
       connectionString
     })
     await client.connect()
-    const connectionParams = parse(connectionString)
-
     const { rows } = await client.query<{ table_name: string }>(query)
     const tables = rows.map(row => row.table_name)
     const destinationFilePath = path.join(process.cwd(), "output", `tables-${filename}.sql`)
-    const extraEnv ={
-      "PGPASSWORD": connectionParams.password!,
-      "PGSSLMODE": "require"
-    }
-    
     const args = [
       connectionString,
       ...tables.map(t => `-t '\"${t}\"'`),
       `--schema-only`,
       `-f ${destinationFilePath}`
     ]
-    
     await executeCommand("pg_dump", args)
   } catch (e) {
     console.log("Error: ", e)
   }
-
 };
 
 export const executeCommand = (
@@ -76,11 +60,8 @@ export const executeCommand = (
 ): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     const spawnedCmd = exec(`${command} ${args.join(" ")}`);
-    
-        //spawnedCmd.stdin.write(`${text}\r\n`);
         spawnedCmd.on("exit", () => {
           resolve()
-
     });
   });
 };

@@ -5,7 +5,7 @@ import inquirer from "inquirer"
 config()
 const executeProgram = async () => {
   const answer = await inquirer.prompt([{
-    name:"choices",
+    name: "choices",
     type: "checkbox",
     message: "Select the objects that you want to dump",
     choices: [
@@ -30,26 +30,23 @@ const executeProgram = async () => {
     process.env.CONNECTION_STRING_PROD as string,
     "prod"
   )
-
   const dumpDevFunctions = backupPostgresFunctions(
     process.env.CONNECTION_STRING_DEV as string,
     "dev"
   )
-
   const dumpProdTables = backupPostgresTables(
     process.env.CONNECTION_STRING_PROD as string,
     "prod"
   )
-
   const dumpDevTables = backupPostgresTables(
     process.env.CONNECTION_STRING_DEV as string,
     "dev"
   )
-  if(answer.choices.includes("Functions")){
+  if (answer.choices.includes("Functions")) {
     promisesToResolve.push(dumpProdFunctions)
     promisesToResolve.push(dumpDevFunctions)
   }
-  if(answer.choices.includes("Tables")){
+  if (answer.choices.includes("Tables")) {
     promisesToResolve.push(dumpProdTables)
     promisesToResolve.push(dumpDevTables)
   }
